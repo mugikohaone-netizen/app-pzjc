@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>画像合成くん</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#f6f3ec;
+    --ink:#232120;
+    --ink-soft:#5a5652;
+    --hanko:#a83c32;
+    --hanko-dark:#822c24;
+    --line:#dcd6c8;
+    --card:#ffffff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans JP',sans-serif;
+    min-height:100vh;
+    padding-bottom:40px;
+  }
+  header{
+    padding:18px 16px 10px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#fbf9f4,var(--paper));
+  }
+  header h1{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:20px;
+    margin:0 0 2px;
+    letter-spacing:.04em;
+  }
+  header h1 .mark{
+    color:var(--hanko);
+  }
+  header p{
+    margin:0;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  main{
+    max-width:520px;
+    margin:0 auto;
+    padding:14px 14px 0;
+  }
+  .canvas-wrap{
+    background:repeating-conic-gradient(#e9e4d6 0% 25%, #f6f3ec 0% 50%) 50% / 22px 22px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    position:relative;
+    box-shadow:0 2px 10px rgba(35,33,32,0.06);
+    touch-action:none;
+  }
+  #stage{
+    display:block;
+    width:100%;
+    height:auto;
+    touch-action:none;
+  }
+  .empty-hint{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:0 30px;
+    pointer-events:none;
+  }
+  .toolbar{
+    display:flex;
+    gap:8px;
+    margin-top:12px;
+  }
+  .btn{
+    flex:1;
+    padding:12px 8px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+    text-align:center;
+    cursor:pointer;
+  }
+  .btn.primary{
+    background:var(--hanko);
+    border-color:var(--hanko);
+    color:#fff;
+  }
+  .btn:active{ transform:translateY(1px); }
+  input[type=file]{ display:none; }
+
+  .panel{
+    margin-top:14px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px 14px 6px;
+    box-shadow:0 2px 10px rgba(35,33,32,0.05);
+  }
+  .panel.disabled{ opacity:.4; pointer-events:none; }
+  .panel-title{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .panel-title .badge{
+    font-size:10.5px;
+    font-weight:500;
+    color:var(--ink-soft);
+    background:var(--paper);
+    border:1px solid var(--line);
+    padding:2px 8px;
+    border-radius:20px;
+  }
+  .row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .row label{
+    width:56px;
+    font-size:12px;
+    color:var(--ink-soft);
+    flex-shrink:0;
+  }
+  .row input[type=range]{
+    flex:1;
+    accent-color:var(--hanko);
+  }
+  .row .val{
+    width:42px;
+    text-align:right;
+    font-size:11.5px;
+    color:var(--ink-soft);
+  }
+  .mini-actions{
+    display:flex;
+    gap:6px;
+    margin:4px 0 12px;
+    flex-wrap:wrap;
+  }
+  .mini-btn{
+    flex:1;
+    min-width:60px;
+    padding:8px 4px;
+    font-size:11.5px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    text-align:center;
+  }
+  .mini-btn.danger{ color:var(--hanko-dark); border-color:#e3c3bd; background:#fbf0ee; }
+
+  .layer-strip{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:2px 0 10px;
+  }
+  .layer-chip{
+    flex-shrink:0;
+    width:46px;
+    height:46px;
+    border-radius:9px;
+    border:2px solid var(--line);
+    background-size:cover;
+    background-position:center;
+    background-color:#eee;
+    position:relative;
+  }
+  .layer-chip.active{ border-color:var(--hanko); }
+
+  footer{
+    text-align:center;
+    font-size:10.5px;
+    color:var(--ink-soft);
+    margin-top:22px;
+    padding:0 20px;
+    line-height:1.6;
+  }
+</style>
+<link rel="apple-touch-icon" href="./icon.png">
+</head>
+<body>
+
+<header>
+  <h1><span class="mark">合</span>画像合成くん</h1>
+  <p>背景に画像を重ねて、指で動かす・伸ばす・まわす</p>
+</header>
+
+<main>
+  <div class="canvas-wrap" id="stageWrap">
+    <canvas id="stage" width="800" height="1000"></canvas>
+    <div class="empty-hint" id="emptyHint">まずは下の「背景を選ぶ」から<br>ベースになる画像を選んでください</div>
+  </div>
+
+  <div class="toolbar">
+    <div class="btn" id="pickBaseBtn">🖼 背景を選ぶ</div>
+    <div class="btn" id="pickOverlayBtn">📌 画像を貼る</div>
+  </div>
+  <div class="toolbar">
+    <div class="btn primary" id="saveBtn">💾 保存する（PNG）</div>
+  </div>
+  <input type="file" id="baseInput" accept="image/*">
+  <input type="file" id="overlayInput" accept="image/*">
+
+  <div class="panel" id="layerPanel">
+    <div class="panel-title">貼り付けた画像 <span class="badge" id="layerCount">0枚</span></div>
+    <div class="layer-strip" id="layerStrip"></div>
+  </div>
+
+  <div class="panel disabled" id="editPanel">
+    <div class="panel-title">選択中のパーツを調整</div>
+    <div class="row">
+      <label>大きさ</label>
+      <input type="range" id="scaleRange" min="5" max="400" value="100">
+      <span class="val" id="scaleVal">100%</span>
+    </div>
+    <div class="row">
+      <label>回転</label>
+      <input type="range" id="rotRange" min="-180" max="180" value="0">
+      <span class="val" id="rotVal">0°</span>
+    </div>
+    <div class="row">
+      <label>透明度</label>
+      <input type="range" id="opRange" min="0" max="100" value="100">
+      <span class="val" id="opVal">100%</span>
+    </div>
+    <div class="mini-actions">
+      <div class="mini-btn" id="frontBtn">最前面へ</div>
+      <div class="mini-btn" id="backBtn">最背面へ</div>
+      <div class="mini-btn" id="dupBtn">複製</div>
+      <div class="mini-btn danger" id="delBtn">削除</div>
+    </div>
+  </div>
+
+  <footer>
+    画像はこの端末の中だけで処理され、どこにも送信されません。<br>
+    操作：1本指でドラッグ＝移動／2本指でつまむ＝拡大縮小・回転
+  </footer>
+</main>
+
+<script>
+(function(){
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d');
+  const stageWrap = document.getElementById('stageWrap');
+  const emptyHint = document.getElementById('emptyHint');
+
+  const baseInput = document.getElementById('baseInput');
+  const overlayInput = document.getElementById('overlayInput');
+  const pickBaseBtn = document.getElementById('pickBaseBtn');
+  const pickOverlayBtn = document.getElementById('pickOverlayBtn');
+  const saveBtn = document.getElementById('saveBtn');
+
+  const editPanel = document.getElementById('editPanel');
+  const layerPanel = document.getElementById('layerPanel');
+  const layerStrip = document.getElementById('layerStrip');
+  const layerCount = document.getElementById('layerCount');
+
+  const scaleRange = document.getElementById('scaleRange');
+  const rotRange = document.getElementById('rotRange');
+  const opRange = document.getElementById('opRange');
+  const scaleVal = document.getElementById('scaleVal');
+  const rotVal = document.getElementById('rotVal');
+  const opVal = document.getElementById('opVal');
+
+  const frontBtn = document.getElementById('frontBtn');
+  const backBtn = document.getElementById('backBtn');
+  const dupBtn = document.getElementById('dupBtn');
+  const delBtn = document.getElementById('delBtn');
+
+  let baseImg = null;
+  let overlays = []; // {img, x, y, naturalW, naturalH, scale, rotation(deg), opacity}
+  let selected = -1;
+
+  const MAX_DIM = 1400; // 内部解像度の上限
+
+  function loadImageFile(file){
+    return new Promise((resolve,reject)=>{
+      const reader = new FileReader();
+      reader.onload = e=>{
+        const img = new Image();
+        img.onload = ()=>resolve(img);
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  pickBaseBtn.addEventListener('click', ()=> baseInput.click());
+  pickOverlayBtn.addEventListener('click', ()=> overlayInput.click());
+
+  baseInput.addEventListener('change', async e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const img = await loadImageFile(file);
+    baseImg = img;
+    let w = img.naturalWidth, h = img.naturalHeight;
+    const ratio = Math.min(1, MAX_DIM / Math.max(w,h));
+    canvas.width = Math.round(w*ratio);
+    canvas.height = Math.round(h*ratio);
+    emptyHint.style.display = 'none';
+    render();
+    baseInput.value = '';
+  });
+
+  overlayInput.addEventListener('change', async e=>{
+    const file = e.target.files[0];
+    if(!file) return;
+    const img = await loadImageFile(file);
+    const nw = img.naturalWidth, nh = img.naturalHeight;
+    const targetMax = Math.max(canvas.width, canvas.height) * 0.4;
+    const scale = targetMax / Math.max(nw, nh);
+    const layer = {
+      img, naturalW: nw, naturalH: nh,
+      x: canvas.width/2, y: canvas.height/2,
+      scale: scale, rotation: 0, opacity: 1
+    };
+    overlays.push(layer);
+    selected = overlays.length - 1;
+    emptyHint.style.display = 'none';
+    syncControls();
+    renderLayerStrip();
+    render();
+    overlayInput.value = '';
+  });
+
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(baseImg){
+      ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.fillStyle = '#f0ece0';
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+    overlays.forEach((L, i)=>{
+      ctx.save();
+      ctx.globalAlpha = L.opacity;
+      ctx.translate(L.x, L.y);
+      ctx.rotate(L.rotation * Math.PI/180);
+      const w = L.naturalW * L.scale;
+      const h = L.naturalH * L.scale;
+      ctx.drawImage(L.img, -w/2, -h/2, w, h);
+      ctx.restore();
+
+      if(i === selected){
+        ctx.save();
+        ctx.translate(L.x, L.y);
+        ctx.rotate(L.rotation * Math.PI/180);
+        ctx.strokeStyle = '#a83c32';
+        ctx.lineWidth = Math.max(2, canvas.width*0.0025);
+        ctx.setLineDash([10,8]);
+        ctx.strokeRect(-w/2, -h/2, w, h);
+        ctx.restore();
+      }
+    });
+  }
+
+  function renderLayerStrip(){
+    layerStrip.innerHTML = '';
+    layerCount.textContent = overlays.length + '枚';
+    overlays.forEach((L, i)=>{
+      const chip = document.createElement('div');
+      chip.className = 'layer-chip' + (i===selected ? ' active' : '');
+      chip.style.backgroundImage = `url(${L.img.src})`;
+      chip.addEventListener('click', ()=>{
+        selected = i;
+        syncControls();
+        renderLayerStrip();
+        render();
+      });
+      layerStrip.appendChild(chip);
+    });
+  }
+
+  function syncControls(){
+    if(selected < 0 || !overlays[selected]){
+      editPanel.classList.add('disabled');
+      return;
+    }
+    editPanel.classList.remove('disabled');
+    const L = overlays[selected];
+    const pct = Math.round(L.scale / ( Math.max(canvas.width,canvas.height)*0.4 / Math.max(L.naturalW,L.naturalH) ) * 100);
+    // scaleRange represents % relative to the initial auto-fit size
+    scaleRange.dataset.baseScale = ( Math.max(canvas.width,canvas.height)*0.4 / Math.max(L.naturalW,L.naturalH) );
+    scaleRange.value = Math.min(400, Math.max(5, pct));
+    scaleVal.textContent = scaleRange.value + '%';
+    rotRange.value = Math.round(L.rotation);
+    rotVal.textContent = Math.round(L.rotation) + '°';
+    opRange.value = Math.round(L.opacity*100);
+    opVal.textContent = Math.round(L.opacity*100) + '%';
+  }
+
+  scaleRange.addEventListener('input', ()=>{
+    if(selected<0) return;
+    const base = parseFloat(scaleRange.dataset.baseScale || 1);
+    const L = overlays[selected];
+    L.scale = base * (scaleRange.value/100);
+    scaleVal.textContent = scaleRange.value + '%';
+    render();
+  });
+  rotRange.addEventListener('input', ()=>{
+    if(selected<0) return;
+    overlays[selected].rotation = parseFloat(rotRange.value);
+    rotVal.textContent = rotRange.value + '°';
+    render();
+  });
+  opRange.addEventListener('input', ()=>{
+    if(selected<0) return;
+    overlays[selected].opacity = parseFloat(opRange.value)/100;
+    opVal.textContent = opRange.value + '%';
+    render();
+  });
+
+  frontBtn.addEventListener('click', ()=>{
+    if(selected<0) return;
+    const [L] = overlays.splice(selected,1);
+    overlays.push(L);
+    selected = overlays.length-1;
+    renderLayerStrip(); render();
+  });
+  backBtn.addEventListener('click', ()=>{
+    if(selected<0) return;
+    const [L] = overlays.splice(selected,1);
+    overlays.unshift(L);
+    selected = 0;
+    renderLayerStrip(); render();
+  });
+  dupBtn.addEventListener('click', ()=>{
+    if(selected<0) return;
+    const src = overlays[selected];
+    const copy = Object.assign({}, src, { x: src.x+30, y: src.y+30 });
+    overlays.push(copy);
+    selected = overlays.length-1;
+    renderLayerStrip(); render();
+  });
+  delBtn.addEventListener('click', ()=>{
+    if(selected<0) return;
+    overlays.splice(selected,1);
+    selected = overlays.length ? overlays.length-1 : -1;
+    syncControls();
+    renderLayerStrip(); render();
+  });
+
+  // ---- タッチ／マウス操作 ----
+  function getCanvasPos(clientX, clientY){
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+  }
+
+  function hitTest(px, py){
+    for(let i = overlays.length-1; i>=0; i--){
+      const L = overlays[i];
+      const dx = px - L.x, dy = py - L.y;
+      const rad = -L.rotation * Math.PI/180;
+      const lx = dx*Math.cos(rad) - dy*Math.sin(rad);
+      const ly = dx*Math.sin(rad) + dy*Math.cos(rad);
+      const hw = (L.naturalW*L.scale)/2, hh = (L.naturalH*L.scale)/2;
+      if(Math.abs(lx) <= hw && Math.abs(ly) <= hh) return i;
+    }
+    return -1;
+  }
+
+  const pointers = new Map();
+  let dragStart = null;      // {x,y} canvas-space of active single drag
+  let dragLayerStart = null; // {x,y} of layer at drag start
+  let pinchStart = null;     // {dist, angle, scale, rotation}
+  let moved = false;
+
+  canvas.addEventListener('pointerdown', e=>{
+    canvas.setPointerCapture(e.pointerId);
+    const pos = getCanvasPos(e.clientX, e.clientY);
+    pointers.set(e.pointerId, pos);
+    moved = false;
+
+    if(pointers.size === 1){
+      const hit = hitTest(pos.x, pos.y);
+      if(hit >= 0){
+        selected = hit;
+        dragStart = pos;
+        dragLayerStart = { x: overlays[hit].x, y: overlays[hit].y };
+        syncControls();
+        renderLayerStrip();
+        render();
+      } else {
+        dragStart = null;
+      }
+    } else if(pointers.size === 2 && selected >= 0){
+      const pts = Array.from(pointers.values());
+      const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y;
+      pinchStart = {
+        dist: Math.hypot(dx,dy),
+        angle: Math.atan2(dy,dx) * 180/Math.PI,
+        scale: overlays[selected].scale,
+        rotation: overlays[selected].rotation
+      };
+      dragStart = null;
+    }
+  });
+
+  canvas.addEventListener('pointermove', e=>{
+    if(!pointers.has(e.pointerId)) return;
+    const pos = getCanvasPos(e.clientX, e.clientY);
+    pointers.set(e.pointerId, pos);
+
+    if(pointers.size === 1 && dragStart && selected >= 0){
+      const dx = pos.x - dragStart.x, dy = pos.y - dragStart.y;
+      if(Math.hypot(dx,dy) > 2) moved = true;
+      overlays[selected].x = dragLayerStart.x + dx;
+      overlays[selected].y = dragLayerStart.y + dy;
+      render();
+    } else if(pointers.size === 2 && pinchStart && selected >= 0){
+      moved = true;
+      const pts = Array.from(pointers.values());
+      const dx = pts[0].x - pts[1].x, dy = pts[0].y - pts[1].y;
+      const dist = Math.hypot(dx,dy);
+      const angle = Math.atan2(dy,dx) * 180/Math.PI;
+      const L = overlays[selected];
+      L.scale = Math.max(0.02, pinchStart.scale * (dist / pinchStart.dist));
+      L.rotation = pinchStart.rotation + (angle - pinchStart.angle);
+      syncControls();
+      render();
+    }
+  });
+
+  function endPointer(e){
+    pointers.delete(e.pointerId);
+    if(pointers.size < 2) pinchStart = null;
+    if(pointers.size === 0){ dragStart = null; dragLayerStart = null; }
+  }
+  canvas.addEventListener('pointerup', endPointer);
+  canvas.addEventListener('pointercancel', endPointer);
+  canvas.addEventListener('pointerleave', endPointer);
+
+  // 保存
+  saveBtn.addEventListener('click', ()=>{
+    if(!baseImg && overlays.length===0){
+      alert('先に背景画像を選んでください');
+      return;
+    }
+    const wasSelected = selected;
+    selected = -1; // 選択枠を消してから書き出す
+    render();
+    canvas.toBlob(blob=>{
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const now = new Date();
+      const stamp = now.getFullYear() + String(now.getMonth()+1).padStart(2,'0') + String(now.getDate()).padStart(2,'0')
+        + '_' + String(now.getHours()).padStart(2,'0') + String(now.getMinutes()).padStart(2,'0');
+      a.href = url;
+      a.download = `gousei_${stamp}.png`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      selected = wasSelected;
+      render();
+    }, 'image/png');
+  });
+
+  render();
+})();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.getRegistrations().then(regs=>{
+    regs.forEach(r=>r.unregister());
+  }).then(()=>{
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
+</script>
+</body>
+</html>
