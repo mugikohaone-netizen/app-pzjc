@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>画像合成くん</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700&family=Noto+Sans+JP:wght@400;500&display=swap" rel="stylesheet">
@@ -23,33 +23,44 @@
     color:var(--ink);
     font-family:'Noto Sans JP',sans-serif;
     min-height:100vh;
-    padding-bottom:40px;
   }
   header{
-    padding:18px 16px 10px;
+    padding:16px 16px 8px;
+    padding-top:calc(16px + env(safe-area-inset-top));
     text-align:center;
-    border-bottom:1px solid var(--line);
-    background:linear-gradient(180deg,#fbf9f4,var(--paper));
+    background:var(--paper);
   }
   header h1{
     font-family:'Zen Kaku Gothic New',sans-serif;
-    font-size:20px;
+    font-size:19px;
     margin:0 0 2px;
     letter-spacing:.04em;
   }
-  header h1 .mark{
-    color:var(--hanko);
+  header h1 .mark{ color:var(--hanko); }
+  header p{ margin:0; font-size:11.5px; color:var(--ink-soft); }
+
+  /* 上のツールバー：普通にスクロールで流れる（固定しない） */
+  .toolbar{ display:flex; gap:8px; }
+  .toolbar + .toolbar{ margin-top:8px; }
+  .btn{
+    flex:1;
+    padding:12px 6px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:var(--card);
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:13px;
+    font-weight:700;
+    color:var(--ink);
+    text-align:center;
+    cursor:pointer;
   }
-  header p{
-    margin:0;
-    font-size:11.5px;
-    color:var(--ink-soft);
-  }
-  main{
-    max-width:520px;
-    margin:0 auto;
-    padding:14px 14px 0;
-  }
+  .btn.primary{ background:var(--hanko); border-color:var(--hanko); color:#fff; }
+  .btn:active{ transform:translateY(1px); }
+  input[type=file]{ display:none; }
+
+  main{ max-width:520px; margin:0 auto; padding:12px 14px 20px; }
+
   .canvas-wrap{
     background:repeating-conic-gradient(#e9e4d6 0% 25%, #f6f3ec 0% 50%) 50% / 22px 22px;
     border:1px solid var(--line);
@@ -58,10 +69,16 @@
     position:relative;
     box-shadow:0 2px 10px rgba(35,33,32,0.06);
     touch-action:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    margin-top:12px;
   }
   #stage{
     display:block;
-    width:100%;
+    max-width:100%;
+    max-height:50dvh;
+    width:auto;
     height:auto;
     touch-action:none;
   }
@@ -77,31 +94,6 @@
     padding:0 30px;
     pointer-events:none;
   }
-  .toolbar{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-  }
-  .btn{
-    flex:1;
-    padding:12px 8px;
-    border-radius:10px;
-    border:1px solid var(--line);
-    background:var(--card);
-    font-family:'Zen Kaku Gothic New',sans-serif;
-    font-size:13px;
-    font-weight:700;
-    color:var(--ink);
-    text-align:center;
-    cursor:pointer;
-  }
-  .btn.primary{
-    background:var(--hanko);
-    border-color:var(--hanko);
-    color:#fff;
-  }
-  .btn:active{ transform:translateY(1px); }
-  input[type=file]{ display:none; }
 
   .panel{
     margin-top:14px;
@@ -111,7 +103,6 @@
     padding:14px 14px 6px;
     box-shadow:0 2px 10px rgba(35,33,32,0.05);
   }
-  .panel.disabled{ opacity:.4; pointer-events:none; }
   .panel-title{
     font-family:'Zen Kaku Gothic New',sans-serif;
     font-size:13px;
@@ -130,47 +121,6 @@
     padding:2px 8px;
     border-radius:20px;
   }
-  .row{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:10px;
-  }
-  .row label{
-    width:56px;
-    font-size:12px;
-    color:var(--ink-soft);
-    flex-shrink:0;
-  }
-  .row input[type=range]{
-    flex:1;
-    accent-color:var(--hanko);
-  }
-  .row .val{
-    width:42px;
-    text-align:right;
-    font-size:11.5px;
-    color:var(--ink-soft);
-  }
-  .mini-actions{
-    display:flex;
-    gap:6px;
-    margin:4px 0 12px;
-    flex-wrap:wrap;
-  }
-  .mini-btn{
-    flex:1;
-    min-width:60px;
-    padding:8px 4px;
-    font-size:11.5px;
-    border-radius:8px;
-    border:1px solid var(--line);
-    background:var(--paper);
-    color:var(--ink);
-    text-align:center;
-  }
-  .mini-btn.danger{ color:var(--hanko-dark); border-color:#e3c3bd; background:#fbf0ee; }
-
   .layer-strip{
     display:flex;
     gap:8px;
@@ -179,8 +129,8 @@
   }
   .layer-chip{
     flex-shrink:0;
-    width:46px;
-    height:46px;
+    width:52px;
+    height:52px;
     border-radius:9px;
     border:2px solid var(--line);
     background-size:cover;
@@ -189,6 +139,103 @@
     position:relative;
   }
   .layer-chip.active{ border-color:var(--hanko); }
+
+  /* パーツ調整パネル：画面下にsticky固定でずっと使える */
+  .edit-sticky{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    z-index:30;
+    background:var(--card);
+    border-top:1px solid var(--line);
+    box-shadow:0 -6px 16px rgba(35,33,32,0.10);
+    padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    max-height:50dvh;
+    overflow-y:auto;
+  }
+  .edit-hint{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    text-align:center;
+    padding:10px 4px;
+  }
+  .edit-title{
+    font-family:'Zen Kaku Gothic New',sans-serif;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--hanko-dark);
+    margin-bottom:8px;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .edit-title .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--hanko); display:inline-block;
+  }
+  .row{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:10px;
+  }
+  .row label{
+    width:50px;
+    font-size:12px;
+    color:var(--ink-soft);
+    flex-shrink:0;
+  }
+  .row input[type=range]{
+    flex:1;
+    accent-color:var(--hanko);
+    height:28px;
+  }
+  .num-wrap{
+    display:flex;
+    align-items:center;
+    flex-shrink:0;
+    border:1px solid var(--line);
+    border-radius:8px;
+    overflow:hidden;
+    background:var(--paper);
+  }
+  .num-wrap input[type=number]{
+    width:52px;
+    border:none;
+    background:transparent;
+    text-align:right;
+    font-size:13px;
+    padding:6px 2px 6px 6px;
+    color:var(--ink);
+    -moz-appearance:textfield;
+  }
+  .num-wrap input[type=number]::-webkit-outer-spin-button,
+  .num-wrap input[type=number]::-webkit-inner-spin-button{
+    -webkit-appearance:none; margin:0;
+  }
+  .num-wrap .unit{
+    font-size:11px;
+    color:var(--ink-soft);
+    padding-right:7px;
+  }
+  .mini-actions{
+    display:flex;
+    gap:6px;
+    margin:2px 0 6px;
+    flex-wrap:wrap;
+  }
+  .mini-btn{
+    flex:1;
+    min-width:60px;
+    padding:9px 4px;
+    font-size:11.5px;
+    border-radius:8px;
+    border:1px solid var(--line);
+    background:var(--paper);
+    color:var(--ink);
+    text-align:center;
+  }
+  .mini-btn.danger{ color:var(--hanko-dark); border-color:#e3c3bd; background:#fbf0ee; }
+  .mini-btn.reset{ color:var(--hanko-dark); font-weight:700; }
 
   footer{
     text-align:center;
@@ -208,12 +255,7 @@
   <p>背景に画像を重ねて、指で動かす・伸ばす・まわす</p>
 </header>
 
-<main>
-  <div class="canvas-wrap" id="stageWrap">
-    <canvas id="stage" width="800" height="1000"></canvas>
-    <div class="empty-hint" id="emptyHint">まずは下の「背景を選ぶ」から<br>ベースになる画像を選んでください</div>
-  </div>
-
+<main id="mainArea">
   <div class="toolbar">
     <div class="btn" id="pickBaseBtn">🖼 背景を選ぶ</div>
     <div class="btn" id="pickOverlayBtn">📌 画像を貼る</div>
@@ -221,6 +263,12 @@
   <div class="toolbar">
     <div class="btn primary" id="saveBtn">💾 保存する（PNG）</div>
   </div>
+
+  <div class="canvas-wrap" id="stageWrap">
+    <canvas id="stage" width="800" height="1000"></canvas>
+    <div class="empty-hint" id="emptyHint">まずは上の「背景を選ぶ」から<br>ベースになる画像を選んでください</div>
+  </div>
+
   <input type="file" id="baseInput" accept="image/*">
   <input type="file" id="overlayInput" accept="image/*">
 
@@ -229,22 +277,36 @@
     <div class="layer-strip" id="layerStrip"></div>
   </div>
 
-  <div class="panel disabled" id="editPanel">
-    <div class="panel-title">選択中のパーツを調整</div>
+  <footer>
+    画像はこの端末の中だけで処理され、どこにも送信されません。<br>
+    操作：1本指でドラッグ＝移動／2本指でつまむ＝拡大縮小・回転／何もない場所をタップで選択解除
+  </footer>
+</main>
+
+<div class="edit-sticky" id="editSticky">
+  <div class="edit-hint" id="editHint">パーツをタップすると、ここでサイズ・角度を調整できます</div>
+
+  <div id="editBody" style="display:none;">
+    <div class="edit-title"><span class="dot"></span>選択中のパーツを調整</div>
+
     <div class="row">
       <label>大きさ</label>
       <input type="range" id="scaleRange" min="5" max="400" value="100">
-      <span class="val" id="scaleVal">100%</span>
+      <div class="num-wrap"><input type="number" id="scaleNum" min="5" max="400" value="100"><span class="unit">%</span></div>
     </div>
     <div class="row">
       <label>回転</label>
       <input type="range" id="rotRange" min="-180" max="180" value="0">
-      <span class="val" id="rotVal">0°</span>
+      <div class="num-wrap"><input type="number" id="rotNum" min="-180" max="180" value="0"><span class="unit">°</span></div>
     </div>
     <div class="row">
       <label>透明度</label>
       <input type="range" id="opRange" min="0" max="100" value="100">
-      <span class="val" id="opVal">100%</span>
+      <div class="num-wrap"><input type="number" id="opNum" min="0" max="100" value="100"><span class="unit">%</span></div>
+    </div>
+
+    <div class="mini-actions">
+      <div class="mini-btn reset" id="resetBtn">↺ 最初に戻す</div>
     </div>
     <div class="mini-actions">
       <div class="mini-btn" id="frontBtn">最前面へ</div>
@@ -253,12 +315,7 @@
       <div class="mini-btn danger" id="delBtn">削除</div>
     </div>
   </div>
-
-  <footer>
-    画像はこの端末の中だけで処理され、どこにも送信されません。<br>
-    操作：1本指でドラッグ＝移動／2本指でつまむ＝拡大縮小・回転
-  </footer>
-</main>
+</div>
 
 <script>
 (function(){
@@ -266,6 +323,7 @@
   const ctx = canvas.getContext('2d');
   const stageWrap = document.getElementById('stageWrap');
   const emptyHint = document.getElementById('emptyHint');
+  const mainArea = document.getElementById('mainArea');
 
   const baseInput = document.getElementById('baseInput');
   const overlayInput = document.getElementById('overlayInput');
@@ -273,7 +331,9 @@
   const pickOverlayBtn = document.getElementById('pickOverlayBtn');
   const saveBtn = document.getElementById('saveBtn');
 
-  const editPanel = document.getElementById('editPanel');
+  const editSticky = document.getElementById('editSticky');
+  const editHint = document.getElementById('editHint');
+  const editBody = document.getElementById('editBody');
   const layerPanel = document.getElementById('layerPanel');
   const layerStrip = document.getElementById('layerStrip');
   const layerCount = document.getElementById('layerCount');
@@ -281,20 +341,32 @@
   const scaleRange = document.getElementById('scaleRange');
   const rotRange = document.getElementById('rotRange');
   const opRange = document.getElementById('opRange');
-  const scaleVal = document.getElementById('scaleVal');
-  const rotVal = document.getElementById('rotVal');
-  const opVal = document.getElementById('opVal');
+  const scaleNum = document.getElementById('scaleNum');
+  const rotNum = document.getElementById('rotNum');
+  const opNum = document.getElementById('opNum');
 
   const frontBtn = document.getElementById('frontBtn');
   const backBtn = document.getElementById('backBtn');
   const dupBtn = document.getElementById('dupBtn');
   const delBtn = document.getElementById('delBtn');
+  const resetBtn = document.getElementById('resetBtn');
 
   let baseImg = null;
-  let overlays = []; // {img, x, y, naturalW, naturalH, scale, rotation(deg), opacity}
+  let overlays = [];
   let selected = -1;
 
-  const MAX_DIM = 1400; // 内部解像度の上限
+  const MAX_DIM = 1400;
+
+  // 固定パネルの高さぶん、下に余白を確保（サイズが変わるたびに再計算）
+  function updateMainPadding(){
+    mainArea.style.paddingBottom = (editSticky.offsetHeight + 16) + 'px';
+  }
+  if(window.ResizeObserver){
+    new ResizeObserver(updateMainPadding).observe(editSticky);
+  }
+  window.addEventListener('resize', updateMainPadding);
+  window.addEventListener('load', updateMainPadding);
+  setTimeout(updateMainPadding, 50);
 
   function loadImageFile(file){
     return new Promise((resolve,reject)=>{
@@ -339,6 +411,7 @@
       x: canvas.width/2, y: canvas.height/2,
       scale: scale, rotation: 0, opacity: 1
     };
+    layer.init = { x: layer.x, y: layer.y, scale: layer.scale, rotation: layer.rotation, opacity: layer.opacity };
     overlays.push(layer);
     selected = overlays.length - 1;
     emptyHint.style.display = 'none';
@@ -396,42 +469,73 @@
     });
   }
 
-  function syncControls(){
-    if(selected < 0 || !overlays[selected]){
-      editPanel.classList.add('disabled');
-      return;
-    }
-    editPanel.classList.remove('disabled');
-    const L = overlays[selected];
-    const pct = Math.round(L.scale / ( Math.max(canvas.width,canvas.height)*0.4 / Math.max(L.naturalW,L.naturalH) ) * 100);
-    // scaleRange represents % relative to the initial auto-fit size
-    scaleRange.dataset.baseScale = ( Math.max(canvas.width,canvas.height)*0.4 / Math.max(L.naturalW,L.naturalH) );
-    scaleRange.value = Math.min(400, Math.max(5, pct));
-    scaleVal.textContent = scaleRange.value + '%';
-    rotRange.value = Math.round(L.rotation);
-    rotVal.textContent = Math.round(L.rotation) + '°';
-    opRange.value = Math.round(L.opacity*100);
-    opVal.textContent = Math.round(L.opacity*100) + '%';
+  function baseScaleFor(L){
+    return ( Math.max(canvas.width,canvas.height)*0.4 / Math.max(L.naturalW,L.naturalH) );
   }
 
-  scaleRange.addEventListener('input', ()=>{
-    if(selected<0) return;
-    const base = parseFloat(scaleRange.dataset.baseScale || 1);
+  function syncControls(){
+    if(selected < 0 || !overlays[selected]){
+      editHint.style.display = 'block';
+      editBody.style.display = 'none';
+      updateMainPadding();
+      return;
+    }
+    editHint.style.display = 'none';
+    editBody.style.display = 'block';
     const L = overlays[selected];
-    L.scale = base * (scaleRange.value/100);
-    scaleVal.textContent = scaleRange.value + '%';
-    render();
-  });
-  rotRange.addEventListener('input', ()=>{
+    const base = baseScaleFor(L);
+    scaleRange.dataset.baseScale = base;
+    const pct = Math.round(L.scale / base * 100);
+    scaleRange.value = Math.min(400, Math.max(5, pct));
+    scaleNum.value = scaleRange.value;
+    rotRange.value = Math.round(L.rotation);
+    rotNum.value = rotRange.value;
+    opRange.value = Math.round(L.opacity*100);
+    opNum.value = opRange.value;
+    updateMainPadding();
+  }
+
+  function applyScalePercent(pct){
     if(selected<0) return;
-    overlays[selected].rotation = parseFloat(rotRange.value);
-    rotVal.textContent = rotRange.value + '°';
+    pct = Math.min(400, Math.max(5, Math.round(pct) || 100));
+    const L = overlays[selected];
+    const base = parseFloat(scaleRange.dataset.baseScale || baseScaleFor(L));
+    L.scale = base * (pct/100);
+    scaleRange.value = pct;
+    scaleNum.value = pct;
     render();
-  });
-  opRange.addEventListener('input', ()=>{
+  }
+  function applyRotation(deg){
     if(selected<0) return;
-    overlays[selected].opacity = parseFloat(opRange.value)/100;
-    opVal.textContent = opRange.value + '%';
+    deg = Math.min(180, Math.max(-180, Math.round(deg) || 0));
+    overlays[selected].rotation = deg;
+    rotRange.value = deg;
+    rotNum.value = deg;
+    render();
+  }
+  function applyOpacity(pct){
+    if(selected<0) return;
+    pct = Math.min(100, Math.max(0, Math.round(pct)));
+    overlays[selected].opacity = pct/100;
+    opRange.value = pct;
+    opNum.value = pct;
+    render();
+  }
+
+  scaleRange.addEventListener('input', ()=> applyScalePercent(parseFloat(scaleRange.value)));
+  rotRange.addEventListener('input', ()=> applyRotation(parseFloat(rotRange.value)));
+  opRange.addEventListener('input', ()=> applyOpacity(parseFloat(opRange.value)));
+
+  scaleNum.addEventListener('input', ()=> applyScalePercent(parseFloat(scaleNum.value)));
+  rotNum.addEventListener('input', ()=> applyRotation(parseFloat(rotNum.value)));
+  opNum.addEventListener('input', ()=> applyOpacity(parseFloat(opNum.value)));
+
+  resetBtn.addEventListener('click', ()=>{
+    if(selected<0) return;
+    const L = overlays[selected];
+    L.x = L.init.x; L.y = L.init.y;
+    L.scale = L.init.scale; L.rotation = L.init.rotation; L.opacity = L.init.opacity;
+    syncControls();
     render();
   });
 
@@ -453,6 +557,7 @@
     if(selected<0) return;
     const src = overlays[selected];
     const copy = Object.assign({}, src, { x: src.x+30, y: src.y+30 });
+    copy.init = Object.assign({}, src.init);
     overlays.push(copy);
     selected = overlays.length-1;
     renderLayerStrip(); render();
@@ -487,10 +592,11 @@
   }
 
   const pointers = new Map();
-  let dragStart = null;      // {x,y} canvas-space of active single drag
-  let dragLayerStart = null; // {x,y} of layer at drag start
-  let pinchStart = null;     // {dist, angle, scale, rotation}
+  let dragStart = null;
+  let dragLayerStart = null;
+  let pinchStart = null;
   let moved = false;
+  let tapHitIndex = -1;
 
   canvas.addEventListener('pointerdown', e=>{
     canvas.setPointerCapture(e.pointerId);
@@ -500,13 +606,10 @@
 
     if(pointers.size === 1){
       const hit = hitTest(pos.x, pos.y);
+      tapHitIndex = hit;
       if(hit >= 0){
-        selected = hit;
         dragStart = pos;
         dragLayerStart = { x: overlays[hit].x, y: overlays[hit].y };
-        syncControls();
-        renderLayerStrip();
-        render();
       } else {
         dragStart = null;
       }
@@ -528,11 +631,11 @@
     const pos = getCanvasPos(e.clientX, e.clientY);
     pointers.set(e.pointerId, pos);
 
-    if(pointers.size === 1 && dragStart && selected >= 0){
+    if(pointers.size === 1 && dragStart && tapHitIndex >= 0){
       const dx = pos.x - dragStart.x, dy = pos.y - dragStart.y;
       if(Math.hypot(dx,dy) > 2) moved = true;
-      overlays[selected].x = dragLayerStart.x + dx;
-      overlays[selected].y = dragLayerStart.y + dy;
+      overlays[tapHitIndex].x = dragLayerStart.x + dx;
+      overlays[tapHitIndex].y = dragLayerStart.y + dy;
       render();
     } else if(pointers.size === 2 && pinchStart && selected >= 0){
       moved = true;
@@ -549,9 +652,18 @@
   });
 
   function endPointer(e){
+    const wasSingle = pointers.size === 1;
     pointers.delete(e.pointerId);
     if(pointers.size < 2) pinchStart = null;
-    if(pointers.size === 0){ dragStart = null; dragLayerStart = null; }
+    if(pointers.size === 0){
+      if(wasSingle && !moved){
+        selected = tapHitIndex;
+        syncControls();
+        renderLayerStrip();
+        render();
+      }
+      dragStart = null; dragLayerStart = null; tapHitIndex = -1;
+    }
   }
   canvas.addEventListener('pointerup', endPointer);
   canvas.addEventListener('pointercancel', endPointer);
@@ -564,7 +676,7 @@
       return;
     }
     const wasSelected = selected;
-    selected = -1; // 選択枠を消してから書き出す
+    selected = -1;
     render();
     canvas.toBlob(blob=>{
       const url = URL.createObjectURL(blob);
